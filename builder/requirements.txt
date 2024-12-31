@@ -13,3 +13,4 @@ hf_transfer
 pillow
 sentencepiece
 opencv-python
+imageio-ffmpeg
