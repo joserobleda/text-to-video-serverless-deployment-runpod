@@ -47,7 +47,7 @@ def handler(job):
     # number_of_frames = min(number_of_frames, 48)
 
     try:
-
+        print('inference')
         video = pipe(
             prompt=prompt,
             num_videos_per_prompt=1,
