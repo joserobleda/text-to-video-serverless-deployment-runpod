@@ -48,8 +48,10 @@ def handler(job):
 
     # try:
     if torch.cuda.is_available():
+        print('=============cuda available==================')
         generator = torch.Generator('cuda').manual_seed(42)
     else:
+        print('=============cuda not available==============')
         generator = torch.Generator().manual_seed(42)
     print('inference')
     video = pipe(
