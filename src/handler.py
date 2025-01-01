@@ -10,14 +10,14 @@ from diffusers.utils import export_to_video
 # If your handler runs inference on a model, load the model here.
 # You will want models to be loaded into memory before starting serverless.
 
-try:
-    print("========Init text to video pipeline======")
-    pipe = CogVideoXPipeline.from_pretrained(
-        "THUDM/CogVideoX-5b",
-        torch_dtype=torch.bfloat16
-    )
-except RuntimeError:
-    quit()
+# try:
+print("========Init text to video pipeline======")
+pipe = CogVideoXPipeline.from_pretrained(
+    "THUDM/CogVideoX-5b",
+    torch_dtype=torch.bfloat16
+)
+# except RuntimeError:
+#     quit()
 
 
 def handler(job):
@@ -46,26 +46,26 @@ def handler(job):
     # number_of_frames = number_of_frames - (number_of_frames % fps)
     # number_of_frames = min(number_of_frames, 48)
 
-    try:
-        print('inference')
-        video = pipe(
-            prompt=prompt,
-            num_videos_per_prompt=1,
-            num_inference_steps=num_inference_steps,
-            num_frames=number_of_frames,
-            guidance_scale=guidance_scale,
-            generator=torch.Generator(device="cuda").manual_seed(42),
-        ).frames[0]
+    # try:
+    print('inference')
+    video = pipe(
+        prompt=prompt,
+        num_videos_per_prompt=1,
+        num_inference_steps=num_inference_steps,
+        num_frames=number_of_frames,
+        guidance_scale=guidance_scale,
+        generator=torch.Generator(device="cuda").manual_seed(42),
+    ).frames[0]
 
-        file_name = "new_out.mp4"
-        export_to_video(video, file_name, fps=fps)
+    file_name = "new_out.mp4"
+    export_to_video(video, file_name, fps=fps)
 
-        print("time elapsed:", time.time() - time_start)
-        encoded_frames=encode_video_to_base64(file_name)
-        return encoded_frames
-    except:
-
-        return {'Comment':'Error Occured'}
+    print("time elapsed:", time.time() - time_start)
+    encoded_frames=encode_video_to_base64(file_name)
+    return encoded_frames
+    # except:
+    #
+    #     return {'Comment':'Error Occured'}
 
 
 runpod.serverless.start({"handler": handler})
