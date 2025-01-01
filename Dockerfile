@@ -17,8 +17,8 @@ FROM runpod/pytorch:2.2.1-py3.10-cuda12.1.1-devel-ubuntu22.04
 # Python dependencies
 COPY builder/requirements.txt /requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip \
-    python3.11 -m pip install  --upgrade pip && \
-    python3.11 -m pip install --default-timeout=100 --upgrade -r /requirements.txt --no-cache-dir && \
+    python -m pip install  --upgrade pip && \
+    python-m pip install --default-timeout=100 --upgrade -r /requirements.txt --no-cache-dir && \
     rm /requirements.txt
 
 # NOTE: The base image comes with multiple Python versions pre-installed.
@@ -28,6 +28,6 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # Add src files (Worker Template)
 ADD src .
 
-RUN --mount=type=cache,target=/root/.cache/pip python3.11 /handler.py --default-timeout=100
+RUN --mount=type=cache,target=/root/.cache/pip python /handler.py --default-timeout=100
 
-CMD python3.11 -u /handler.py
+CMD python -u /handler.py
