@@ -18,10 +18,12 @@ pipe = CogVideoXPipeline.from_pretrained(
 )
 # except RuntimeError:
 #     quit()
+print("========loaded======")
 
 
 def handler(job):
     """ Handler function that will be used to process jobs. """
+    print("========Job starting======")
 
     time_start = time.time()
     input_json = job['input']
