@@ -47,6 +47,10 @@ def handler(job):
     # number_of_frames = min(number_of_frames, 48)
 
     # try:
+    if torch.cuda.is_available():
+        generator = torch.Generator('cuda').manual_seed(42)
+    else:
+        generator = torch.Generator().manual_seed(42)
     print('inference')
     video = pipe(
         prompt=prompt,
@@ -54,7 +58,7 @@ def handler(job):
         num_inference_steps=num_inference_steps,
         num_frames=number_of_frames,
         guidance_scale=guidance_scale,
-        generator=torch.Generator(device="cuda").manual_seed(42),
+        generator=generator,
     ).frames[0]
 
     file_name = "new_out.mp4"

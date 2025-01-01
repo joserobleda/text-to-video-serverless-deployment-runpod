@@ -15,16 +15,21 @@ FROM runpod/pytorch:2.2.1-py3.10-cuda12.1.1-devel-ubuntu22.04
 
 
 # Python dependencies
-COPY builder/requirements.txt /requirements.txt
-RUN --mount=type=cache,target=/root/.cache/pip \
-    python -m pip install  --upgrade pip && \
-    python -m pip install --default-timeout=100 --upgrade -r /requirements.txt --no-cache-dir && \
-    rm /requirements.txt
+# COPY builder/requirements.txt /requirements.txt
+# RUN --mount=type=cache,target=/root/.cache/pip \
+#     python -m pip install  --upgrade pip && \
+#     python -m pip install --default-timeout=100 --upgrade -r /requirements.txt --no-cache-dir && \
+#     rm /requirements.txt
 
 # NOTE: The base image comes with multiple Python versions pre-installed.
 #       It is reccommended to specify the version of Python when running your code.
-
-
+RUN python -m pip install  --upgrade pip
+RUN pip install git+https://github.com/huggingface/diffusers
+RUN pip install --upgrade transformers accelerate diffusers imageio-ffmpeg
+RUN pip install pillow sentencepiece opencv-python runpod==1.6.0
+# transformers>=4.46.2
+# accelerate>=1.1.1
+# imageio-ffmpeg>=0.5.1
 # Add src files (Worker Template)
 ADD src .
 
