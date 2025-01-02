@@ -12,6 +12,8 @@ from diffusers.utils import export_to_video
 
 # try:
 print("========Init text to video pipeline======")
+if torch.cuda.is_available():
+    print('=============cuda available==================')
 pipe = CogVideoXPipeline.from_pretrained(
     "THUDM/CogVideoX-5b",
     torch_dtype=torch.bfloat16
