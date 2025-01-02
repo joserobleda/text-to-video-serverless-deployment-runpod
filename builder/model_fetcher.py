@@ -10,7 +10,7 @@ import argparse
 from pathlib import Path
 from urllib.parse import urlparse
 
-from diffusers import StableDiffusionPipeline
+from diffusers import CogVideoXPipeline
 from diffusers.pipelines.stable_diffusion.safety_checker import (
     StableDiffusionSafetyChecker,
 )
@@ -44,7 +44,7 @@ def download_model(model_url: str):
         cache_dir=model_cache_path,
     )
 
-    StableDiffusionPipeline.from_pretrained(
+    CogVideoXPipeline.from_pretrained(
         model_id,
         cache_dir=model_cache_path,
     )
