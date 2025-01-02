@@ -24,8 +24,10 @@ FROM runpod/pytorch:2.2.1-py3.10-cuda12.1.1-devel-ubuntu22.04
 # NOTE: The base image comes with multiple Python versions pre-installed.
 #       It is reccommended to specify the version of Python when running your code.
 RUN python -m pip install  --upgrade pip
+RUN pip install -q torch==2.4.0+cu121 torchvision==0.19.0+cu121 torchaudio==2.4.0+cu121 torchtext==0.18.0 torchdata==0.8.0 --extra-index-url https://download.pytorch.org/whl/cu121 \
+    tqdm==4.66.5 numpy==1.26.3   xformers==0.0.27.post2  moviepy==1.0.3  sentencepiece==0.2.0 pillow==9.5.0 runpod
 RUN pip install git+https://github.com/huggingface/diffusers
-RUN pip install --upgrade transformers accelerate diffusers imageio-ffmpeg
+RUN pip install --upgrade transformers accelerate diffusers imageio-ffmpeg imageio
 RUN pip install pillow sentencepiece opencv-python runpod==1.6.0
 # transformers>=4.46.2
 # accelerate>=1.1.1
