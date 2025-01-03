@@ -48,7 +48,7 @@ def download_model(model_url: str):
         model_id,
         cache_dir=model_cache_path,
     )
-
+    print('================finished========================')
 
 # ---------------------------------------------------------------------------- #
 #                                Parse Arguments                               #
