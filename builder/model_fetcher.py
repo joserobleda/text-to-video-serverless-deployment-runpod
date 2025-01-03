@@ -40,15 +40,16 @@ def download_model(model_url: str):
                     if chunk:
                         f.write(chunk)
 
-        StableDiffusionSafetyChecker.from_pretrained(
-            SAFETY_MODEL_ID,
-            cache_dir=model_cache_path,
-        )
-
+        # StableDiffusionSafetyChecker.from_pretrained(
+        #     SAFETY_MODEL_ID,
+        #     cache_dir=model_cache_path,
+        # )
+        print('********* loading pipeline***********')
         CogVideoXPipeline.from_pretrained(
             model_id,
             cache_dir=model_cache_path,
         )
+        print('********* loaded pipeline***********')
 
     except Exception as e:
 
