@@ -23,31 +23,43 @@ def download_model(model_url: str):
     '''
     Downloads the model from the URL passed in.
     '''
-    model_cache_path = Path(MODEL_CACHE_DIR)
-    if model_cache_path.exists():
-        shutil.rmtree(model_cache_path)
-    model_cache_path.mkdir(parents=True, exist_ok=True)
+    try:
+        model_cache_path = Path(MODEL_CACHE_DIR)
+        if model_cache_path.exists():
+            shutil.rmtree(model_cache_path)
+        model_cache_path.mkdir(parents=True, exist_ok=True)
 
-    # Check if the URL is from huggingface.co, if so, grab the model repo id.
-    parsed_url = urlparse(model_url)
-    if parsed_url.netloc == "huggingface.co":
-        model_id = f"{parsed_url.path.strip('/')}"
-    else:
-        downloaded_model = requests.get(model_url, stream=True, timeout=600)
-        with open(model_cache_path / "model.zip", "wb") as f:
-            for chunk in downloaded_model.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
+        # Check if the URL is from huggingface.co, if so, grab the model repo id.
+        parsed_url = urlparse(model_url)
+        if parsed_url.netloc == "huggingface.co":
+            model_id = f"{parsed_url.path.strip('/')}"
+        else:
+            downloaded_model = requests.get(model_url, stream=True, timeout=600)
+            with open(model_cache_path / "model.zip", "wb") as f:
+                for chunk in downloaded_model.iter_content(chunk_size=1024):
+                    if chunk:
+                        f.write(chunk)
 
-    StableDiffusionSafetyChecker.from_pretrained(
-        SAFETY_MODEL_ID,
-        cache_dir=model_cache_path,
-    )
+        StableDiffusionSafetyChecker.from_pretrained(
+            SAFETY_MODEL_ID,
+            cache_dir=model_cache_path,
+        )
 
-    CogVideoXPipeline.from_pretrained(
-        model_id,
-        cache_dir=model_cache_path,
-    )
+        CogVideoXPipeline.from_pretrained(
+            model_id,
+            cache_dir=model_cache_path,
+        )
+
+    except Exception as e:
+
+        import traceback
+        # Print the exception type and message
+        print(f"============Error occurred============: {type(e).__name__} - {e}")
+        print(e)
+        # Print the full traceback to understand where the error occurred
+        print("Full traceback:")
+        traceback.print_exc()
+
     print('================finished========================')
 
 # ---------------------------------------------------------------------------- #
