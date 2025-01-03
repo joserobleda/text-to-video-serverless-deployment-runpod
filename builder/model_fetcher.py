@@ -15,7 +15,7 @@ try:
 
 except Exception as e:
     print('---------error--------------',e)
- 
+
 print('============done=============')
 SAFETY_MODEL_ID = "CompVis/stable-diffusion-safety-checker"
 MODEL_CACHE_DIR = "diffusers-cache"
@@ -51,7 +51,7 @@ def download_model(model_url: str):
             model_id,
             cache_dir=model_cache_path,
         )
-        print('********* loaded pipeline***********')
+        print('********* loaded= pipeline***********')
 
     except Exception as e:
 
