@@ -9,12 +9,14 @@ import requests
 import argparse
 from pathlib import Path
 from urllib.parse import urlparse
+print('************** imports***************')
+try:
+    from diffusers import CogVideoXPipeline
 
-from diffusers import CogVideoXPipeline
-from diffusers.pipelines.stable_diffusion.safety_checker import (
-    StableDiffusionSafetyChecker,
-)
-
+except Exception as e:
+    print('---------error--------------',e)
+ 
+print('============done=============')
 SAFETY_MODEL_ID = "CompVis/stable-diffusion-safety-checker"
 MODEL_CACHE_DIR = "diffusers-cache"
 
