@@ -4,77 +4,11 @@ RunPod | serverless-ckpt-template | model_fetcher.py
 Downloads the model from the URL passed in.
 '''
 
-import shutil
-import requests
-import argparse
-from pathlib import Path
-from urllib.parse import urlparse
-print('************** imports***************')
-try:
-    from diffusers import CogVideoXPipeline
 
-except Exception as e:
-    print('---------error--------------',e)
-
-print('============done=============')
-SAFETY_MODEL_ID = "CompVis/stable-diffusion-safety-checker"
-MODEL_CACHE_DIR = "diffusers-cache"
+from huggingface_hub import snapshot_download
 
 
-def download_model(model_url: str):
-    '''
-    Downloads the model from the URL passed in.
-    '''
-    try:
-        model_cache_path = Path(MODEL_CACHE_DIR)
-        if model_cache_path.exists():
-            shutil.rmtree(model_cache_path)
-        model_cache_path.mkdir(parents=True, exist_ok=True)
-
-        # Check if the URL is from huggingface.co, if so, grab the model repo id.
-        parsed_url = urlparse(model_url)
-        if parsed_url.netloc == "huggingface.co":
-            model_id = f"{parsed_url.path.strip('/')}"
-        else:
-            downloaded_model = requests.get(model_url, stream=True, timeout=600)
-            with open(model_cache_path / "model.zip", "wb") as f:
-                for chunk in downloaded_model.iter_content(chunk_size=1024):
-                    if chunk:
-                        f.write(chunk)
-
-        # StableDiffusionSafetyChecker.from_pretrained(
-        #     SAFETY_MODEL_ID,
-        #     cache_dir=model_cache_path,
-        # )
-        print('********* loading pipeline***********')
-        CogVideoXPipeline.from_pretrained(
-            model_id,
-            cache_dir=model_cache_path,
-        )
-        print('********* loaded= pipeline***********')
-
-    except Exception as e:
-
-        import traceback
-        # Print the exception type and message
-        print(f"============Error occurred============: {type(e).__name__} - {e}")
-        print(e)
-        # Print the full traceback to understand where the error occurred
-        print("Full traceback:")
-        traceback.print_exc()
-
-    print('================finished========================')
-
-# ---------------------------------------------------------------------------- #
-#                                Parse Arguments                               #
-# ---------------------------------------------------------------------------- #
-parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument(
-    "--model_url", type=str,
-    default="https://huggingface.co/THUDM/CogVideoX-5b",
-    help="URL of the model to download."
-)
 
 if __name__ == "__main__":
-    args = parser.parse_args()
-    download_model(args.model_url)
+    model_path = 'model_cache'  # The local directory to save downloaded checkpoint
+    snapshot_download("THUDM/CogVideoX-5b", local_dir=model_path, local_dir_use_symlinks=False, repo_type='model')

@@ -14,3 +14,4 @@ pillow
 sentencepiece
 opencv-python
 imageio-ffmpeg
+huggingface_hub

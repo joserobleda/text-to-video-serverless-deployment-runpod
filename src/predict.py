@@ -5,6 +5,14 @@ import torch
 from diffusers import CogVideoXPipeline
 from diffusers.utils import export_to_video
 
+from diffusers import AutoencoderKLCogVideoX, CogVideoXImageToVideoPipeline, CogVideoXTransformer3DModel
+from diffusers.utils import export_to_video, load_image
+from transformers import T5EncoderModel, T5Tokenizer
+import torch
+model_path = 'model_cache'   # The local directory to save downloaded checkpoint
+
+model_id=model_path
+
 # from diffusers.pipelines.stable_diffusion.safety_checker import (
 #     StableDiffusionSafetyChecker,
 # )
@@ -24,18 +32,14 @@ class Predictor:
         #     cache_dir=MODEL_CACHE,
         #     local_files_only=True,
         # )
-        # pipe = CogVideoXPipeline.from_pretrained(
-        #     "THUDM/CogVideoX-5b",
-        #     torch_dtype=torch.bfloat16
-        # )
-        self.pipe = CogVideoXPipeline.from_pretrained(
-            MODEL_ID,
-            safety_checker=None,
-            torch_dtype=torch.bfloat16,
-            # safety_checker=safety_checker,
-            cache_dir=MODEL_CACHE,
-            local_files_only=True,
-        ).to("cuda")
+        transformer = CogVideoXTransformer3DModel.from_pretrained(model_id, subfolder="transformer",
+                                                                  torch_dtype=torch.float16)
+        text_encoder = T5EncoderModel.from_pretrained(model_id, subfolder="text_encoder", torch_dtype=torch.float16)
+        vae = AutoencoderKLCogVideoX.from_pretrained(model_id, subfolder="vae", torch_dtype=torch.float16)
+        tokenizer = T5Tokenizer.from_pretrained(model_id, subfolder="tokenizer")
+        self.pipe = CogVideoXPipeline.from_pretrained(model_id, tokenizer=tokenizer, text_encoder=text_encoder,
+                                                 transformer=transformer, vae=vae, torch_dtype=torch.float16).to("cuda")
+
 
         # self.pipe.enable_xformers_memory_efficient_attention()
 
