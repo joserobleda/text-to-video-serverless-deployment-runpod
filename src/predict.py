@@ -2,6 +2,7 @@ import os
 from typing import List
 from utils import encode_video_to_base64
 import torch
+import numpy as np
 from diffusers import CogVideoXPipeline
 from diffusers.utils import export_to_video
 
