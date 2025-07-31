@@ -6,6 +6,7 @@
 # To learn more, see https://pip.pypa.io/en/stable/reference/requirements-file-format/
 
 runpod==1.6.0
+numpy<2
 diffusers
 transformers
 accelerate
