@@ -20,12 +20,19 @@ from rp_schema import INPUT_SCHEMA
 def upload_video(video_file_path, key):
     """ Uploads video to Cloudflare R2 bucket if it is available, otherwise returns base64 encoded video. """
     
+    print(f"upload_video called with file: {video_file_path}, key: {key}")
+    
     # Read video file as bytes
     with open(video_file_path, 'rb') as video_file:
         video_bytes = video_file.read()
+    
+    print(f"Read video file, size: {len(video_bytes)} bytes")
 
     # Upload to Cloudflare R2 (S3-compatible) - Direct upload to avoid date folders
-    if os.environ.get('BUCKET_ENDPOINT_URL', False):
+    bucket_endpoint = os.environ.get('BUCKET_ENDPOINT_URL', False)
+    print(f"BUCKET_ENDPOINT_URL: {bucket_endpoint}")
+    
+    if bucket_endpoint:
         try:
             # Parse endpoint and bucket from URL
             endpoint_url = os.environ.get('BUCKET_ENDPOINT_URL')
@@ -40,6 +47,8 @@ def upload_video(video_file_path, key):
                 actual_endpoint = endpoint_url
                 bucket_name = os.environ.get('BUCKET_NAME', 'tts')
             
+            print(f"Using endpoint: {actual_endpoint}, bucket: {bucket_name}")
+            
             # Create S3 client for direct upload
             s3_client = boto3.client(
                 's3',
@@ -48,6 +57,8 @@ def upload_video(video_file_path, key):
                 aws_secret_access_key=os.environ.get('BUCKET_SECRET_ACCESS_KEY'),
                 region_name='auto'  # Cloudflare R2 uses 'auto' as region
             )
+            
+            print(f"S3 client created, uploading to bucket '{bucket_name}' with key '{key}'")
             
             # Upload directly to root of bucket (no date folders)
             s3_client.put_object(
@@ -58,24 +69,36 @@ def upload_video(video_file_path, key):
             )
             
             # Return the public URL
-            return f"{actual_endpoint}/{bucket_name}/{key}"
+            video_url = f"{actual_endpoint}/{bucket_name}/{key}"
+            print(f"S3 upload successful, returning URL: {video_url}")
+            return video_url
             
         except Exception as e:
             print(f"Direct S3 upload failed: {e}")
             print("Falling back to RunPod upload function...")
             # Fallback to original RunPod function
-            return upload_in_memory_object(
-                key,
-                video_bytes,
-                bucket_creds = {
-                    "endpointUrl": os.environ.get('BUCKET_ENDPOINT_URL', None),
-                    "accessId": os.environ.get('BUCKET_ACCESS_KEY_ID', None),
-                    "accessSecret": os.environ.get('BUCKET_SECRET_ACCESS_KEY', None)
-                }
-            )
+            try:
+                result = upload_in_memory_object(
+                    key,
+                    video_bytes,
+                    bucket_creds = {
+                        "endpointUrl": os.environ.get('BUCKET_ENDPOINT_URL', None),
+                        "accessId": os.environ.get('BUCKET_ACCESS_KEY_ID', None),
+                        "accessSecret": os.environ.get('BUCKET_SECRET_ACCESS_KEY', None)
+                    }
+                )
+                print(f"RunPod upload successful: {result}")
+                return result
+            except Exception as e2:
+                print(f"RunPod upload also failed: {e2}")
+                raise e2
+    else:
+        print("No BUCKET_ENDPOINT_URL configured, returning base64")
     
     # Base64 encode for direct return if no bucket configured
-    return base64.b64encode(video_bytes).decode('utf-8')
+    encoded = base64.b64encode(video_bytes).decode('utf-8')
+    print(f"Returning base64 encoded video (length: {len(encoded)})")
+    return encoded
 
 
 MODEL = predict.Predictor()
@@ -87,65 +110,99 @@ def run(job):
     Run inference on the model.
     Returns video URL after uploading to R2 bucket.
     '''
-    job_input = job['input']
-
-    # Input validation
-    validated_input = validate(job_input, INPUT_SCHEMA)
-
-    if 'errors' in validated_input:
-        return {"error": validated_input['errors']}
-    validated_input = validated_input['validated_input']
-
-    # Download input objects
-    # job_input['init_image'], job_input['mask'] = rp_download.download_files_from_urls(
-    #     job['id'],
-    #     [job_input.get('init_image', None), job_input.get('mask', None)]
-    # )  # pylint: disable=unbalanced-tuple-unpacking
-
-    # MODEL.NSFW = job_input.get('nsfw', True)
-
-    # if validated_input['seed'] is None:
-    #     validated_input['seed'] = int.from_bytes(os.urandom(2), "big")
-
-    # Run prediction (this creates the video file and returns base64)
-    encoded_vid = MODEL.predict(
-        prompt=validated_input["prompt"],
-        num_inference_steps=validated_input['num_inference_steps'],
-        number_of_frames=validated_input["number_of_frames"],
-        guidance_scale=validated_input['guidance_scale'],
-        fps=8
-    )
-
-    # Upload the video file to R2 bucket
-    video_file_path = "new_out.mp4"  # This is the file created by predict()
-    video_key = f"video_{job['id']}.mp4"  # Use job ID for unique filename
+    print(f"=== RUN FUNCTION CALLED ===")
+    print(f"Job ID: {job.get('id', 'unknown')}")
+    print(f"Job input: {job.get('input', {})}")
     
     try:
-        video_url = upload_video(video_file_path, video_key)
-        
-        # Clean up local video file
-        if os.path.exists(video_file_path):
-            os.remove(video_file_path)
-        
-        return {"video_url": video_url}
-        
-    except Exception as e:
-        print(f"Video upload failed: {e}")
-        # Fallback to base64 if upload fails
-        return {"video_base64": encoded_vid}
+        job_input = job['input']
+        print(f"Extracted job_input: {job_input}")
 
-    # job_output = []
-    #
-    # for index, img_path in enumerate(img_paths):
-    #     image_url = rp_upload.upload_image(job['id'], img_path, index)
-    #
-    #     job_output.append({
-    #         "image": image_url,
-    #         "seed": validated_input['seed'] + index
-    #     })
-    #
-    # # Remove downloaded input objects
-    # rp_cleanup.clean(['input_objects'])
+        # Input validation
+        print("Starting input validation...")
+        validated_input = validate(job_input, INPUT_SCHEMA)
+        print(f"Validation result: {validated_input}")
+
+        if 'errors' in validated_input:
+            print(f"Validation errors found: {validated_input['errors']}")
+            return {"error": validated_input['errors']}
+        validated_input = validated_input['validated_input']
+        print(f"Validated input: {validated_input}")
+
+        # Download input objects
+        # job_input['init_image'], job_input['mask'] = rp_download.download_files_from_urls(
+        #     job['id'],
+        #     [job_input.get('init_image', None), job_input.get('mask', None)]
+        # )  # pylint: disable=unbalanced-tuple-unpacking
+
+        # MODEL.NSFW = job_input.get('nsfw', True)
+
+        # if validated_input['seed'] is None:
+        #     validated_input['seed'] = int.from_bytes(os.urandom(2), "big")
+
+        # Run prediction (this creates the video file and returns base64)
+        print("Starting MODEL.predict...")
+        encoded_vid = MODEL.predict(
+            prompt=validated_input["prompt"],
+            num_inference_steps=validated_input['num_inference_steps'],
+            number_of_frames=validated_input["number_of_frames"],
+            guidance_scale=validated_input['guidance_scale'],
+            fps=8
+        )
+        print("MODEL.predict completed")
+
+        # Upload the video file to R2 bucket
+        video_file_path = "new_out.mp4"  # This is the file created by predict()
+        video_key = f"video_{job['id']}.mp4"  # Use job ID for unique filename
+        
+        print(f"Attempting to upload video file: {video_file_path}")
+        print(f"Video file exists: {os.path.exists(video_file_path)}")
+        
+        if os.path.exists(video_file_path):
+            file_size = os.path.getsize(video_file_path)
+            print(f"Video file size: {file_size} bytes")
+        
+        try:
+            print(f"Uploading with key: {video_key}")
+            video_url = upload_video(video_file_path, video_key)
+            print(f"Upload successful, video URL: {video_url}")
+            
+            # Clean up local video file
+            if os.path.exists(video_file_path):
+                os.remove(video_file_path)
+                print("Local video file cleaned up")
+            
+            result = {"video_url": video_url}
+            print(f"Returning result: {result}")
+            return result
+            
+        except Exception as upload_e:
+            print(f"Video upload failed: {upload_e}")
+            print(f"Falling back to base64 encoded video")
+            # Fallback to base64 if upload fails
+            result = {"video_base64": encoded_vid}
+            print(f"Returning fallback result with base64 (length: {len(encoded_vid) if encoded_vid else 0})")
+            return result
+
+        # job_output = []
+        #
+        # for index, img_path in enumerate(img_paths):
+        #     image_url = rp_upload.upload_image(job['id'], img_path, index)
+        #
+        #     job_output.append({
+        #         "image": image_url,
+        #         "seed": validated_input['seed'] + index
+        #     })
+        #
+        # # Remove downloaded input objects
+        # rp_cleanup.clean(['input_objects'])
+    
+    except Exception as e:
+        print(f"CRITICAL ERROR in run function: {e}")
+        print(f"Error type: {type(e).__name__}")
+        import traceback
+        print(f"Full traceback: {traceback.format_exc()}")
+        return {"error": f"Handler crashed: {str(e)}"}
 
 
 runpod.serverless.start({"handler": run})
