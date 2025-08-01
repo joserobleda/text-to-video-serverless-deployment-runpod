@@ -20,6 +20,12 @@ INPUT_SCHEMA = {
         'default': 768,
         'constraints': lambda height: height in [128, 256, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960, 1024]
     },
+    'aspect_ratio': {
+        'type': str,
+        'required': False,
+        'default': '16:9',
+        'constraints': lambda aspect_ratio: aspect_ratio in ['1:1', '9:16', '2:3', '3:4', '4:3', '3:2', '16:9']
+    },
     'prompt_strength': {
         'type': float,
         'required': False,
@@ -41,20 +47,25 @@ INPUT_SCHEMA = {
     'guidance_scale': {
         'type': float,
         'required': False,
-        'default': 7.5,
+        'default': 6,
         'constraints': lambda guidance_scale: 0 < guidance_scale < 20
     },
-
+    'fps': {
+        'type': int,
+        'required': False,
+        'default': 8,
+        'constraints': lambda fps: 1 <= fps <= 30
+    },
     'nsfw': {
         'type': bool,
         'required': False,
         'default': False
     },
-
-    'number_of_frames': {
+    'num_frames': {
         'type': int,
         'required': False,
-        'default': 49
+        'default': 49,
+        'constraints': lambda num_frames: 1 <= num_frames <= 200
     }
 
 }

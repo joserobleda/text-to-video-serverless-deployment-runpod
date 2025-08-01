@@ -34,7 +34,8 @@ def handler(job):
     prompt = input_json.get('prompt', None)
     guidance_scale = input_json.get('guidance_scale', 6)
     num_inference_steps = input_json.get('num_inference_steps', 32)
-    number_of_frames = input_json.get('num_frames', 49)
+    # Support both num_frames and number_of_frames for backward compatibility
+    number_of_frames = input_json.get('num_frames', input_json.get('number_of_frames', 49))
     aspect_ratio = input_json.get('aspect_ratio', '16:9')  # Default to 16:9
     fps = input_json.get('fps', 8)  # Default to 8
     
