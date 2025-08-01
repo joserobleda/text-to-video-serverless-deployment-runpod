@@ -1,0 +1,27 @@
+{
+    "input": {
+        "prompt": "A beautiful sunset over a mountain landscape, cinematic 4K quality",
+        "aspect_ratio": "16:9",
+        "fps": 8,
+        "num_frames": 49,
+        "guidance_scale": 6,
+        "num_inference_steps": 32
+    },
+    "available_aspect_ratios": {
+        "1:1": "Square - 1024x1024 (social media posts)",
+        "9:16": "Vertical - 720x1280 (mobile/TikTok)",
+        "2:3": "Portrait - 836x1254",
+        "3:4": "Portrait - 876x1168",
+        "4:3": "Standard - 1168x876",
+        "3:2": "Photo - 1254x836",
+        "16:9": "Widescreen - 1280x720 (default)"
+    },
+    "parameter_descriptions": {
+        "prompt": "Text description of the video content",
+        "aspect_ratio": "Video dimensions ratio (default: '16:9')",
+        "fps": "Frames per second (default: 8)",
+        "num_frames": "Total number of frames to generate (default: 49)",
+        "guidance_scale": "How closely to follow the prompt (default: 6)",
+        "num_inference_steps": "Number of denoising steps (default: 32)"
+    }
+} 
