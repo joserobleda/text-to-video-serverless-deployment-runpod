@@ -3,7 +3,7 @@
         "prompt": "A big blue house with a red roof surrounded by green trees, cinematic shot",
         "aspect_ratio": "16:9",
         "fps": 8,
-        "num_frames": 49,
+        "number_of_frames": 49,
         "guidance_scale": 6,
         "num_inference_steps": 32
     }

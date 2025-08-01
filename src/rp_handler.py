@@ -149,7 +149,7 @@ def run(job):
             num_inference_steps=validated_input['num_inference_steps'],
             number_of_frames=validated_input["number_of_frames"],
             guidance_scale=validated_input['guidance_scale'],
-            fps=8
+            fps=validated_input.get("fps", 8)
         )
         print("MODEL.predict completed")
 

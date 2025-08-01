@@ -61,11 +61,11 @@ INPUT_SCHEMA = {
         'required': False,
         'default': False
     },
-    'num_frames': {
+    'number_of_frames': {
         'type': int,
         'required': False,
         'default': 49,
-        'constraints': lambda num_frames: 1 <= num_frames <= 200
+        'constraints': lambda number_of_frames: 1 <= number_of_frames <= 200
     }
 
 }

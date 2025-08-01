@@ -3,7 +3,7 @@
         "prompt": "A beautiful sunset over a mountain landscape, cinematic 4K quality",
         "aspect_ratio": "16:9",
         "fps": 8,
-        "num_frames": 49,
+        "number_of_frames": 49,
         "guidance_scale": 6,
         "num_inference_steps": 32
     },
@@ -20,7 +20,7 @@
         "prompt": "Text description of the video content",
         "aspect_ratio": "Video dimensions ratio (default: '16:9')",
         "fps": "Frames per second (default: 8)",
-        "num_frames": "Total number of frames to generate (default: 49)",
+        "number_of_frames": "Total number of frames to generate (default: 49)",
         "guidance_scale": "How closely to follow the prompt (default: 6)",
         "num_inference_steps": "Number of denoising steps (default: 32)"
     }
