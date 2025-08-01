@@ -4,6 +4,7 @@ import os
 import io
 import base64
 import predict
+import gc  # Add garbage collection import
 
 import runpod
 from runpod.serverless.utils import rp_download, rp_upload, rp_cleanup
@@ -13,6 +14,7 @@ from runpod.serverless.utils.rp_upload import upload_in_memory_object
 # direct S3 upload
 import boto3
 from botocore.exceptions import ClientError
+import torch  # Add torch import for GPU memory cleanup
 
 from rp_schema import INPUT_SCHEMA
 
@@ -174,6 +176,38 @@ def run(job):
             
             result = {"video_url": video_url}
             print(f"Returning result: {result}")
+            
+            # ===== ENHANCED MEMORY CLEANUP =====
+            # Force memory cleanup to prevent accumulation between jobs
+            try:
+                print("Starting post-job memory cleanup...")
+                
+                # Clear any remaining variables
+                if 'encoded_vid' in locals():
+                    del encoded_vid
+                if 'video_url' in locals() and 'result' in locals():
+                    # Keep result but clear other references
+                    pass
+                
+                # PyTorch GPU memory cleanup
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                    torch.cuda.synchronize()  # Wait for GPU operations to complete
+                    
+                    # Get memory stats for monitoring
+                    memory_allocated = torch.cuda.memory_allocated() / 1024**3  # GB
+                    memory_cached = torch.cuda.memory_reserved() / 1024**3      # GB
+                    print(f"Post-job GPU Memory - Allocated: {memory_allocated:.2f}GB, Cached: {memory_cached:.2f}GB")
+                
+                # Force garbage collection
+                gc.collect()
+                
+                print(f"Memory cleanup completed for job {job['id']}")
+                
+            except Exception as cleanup_error:
+                print(f"Warning: Post-job memory cleanup failed: {cleanup_error}")
+            # ===== END ENHANCED MEMORY CLEANUP =====
+            
             return result
             
         except Exception as upload_e:
@@ -182,6 +216,32 @@ def run(job):
             # Fallback to base64 if upload fails
             result = {"video_base64": encoded_vid}
             print(f"Returning fallback result with base64 (length: {len(encoded_vid) if encoded_vid else 0})")
+            
+            # ===== ENHANCED MEMORY CLEANUP (FALLBACK PATH) =====
+            try:
+                print("Starting post-job memory cleanup (fallback path)...")
+                
+                # Clear variables
+                if 'encoded_vid' in locals() and 'result' in locals():
+                    # Keep result but clear other references
+                    pass
+                
+                # PyTorch GPU memory cleanup
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                    torch.cuda.synchronize()
+                    
+                    memory_allocated = torch.cuda.memory_allocated() / 1024**3
+                    memory_cached = torch.cuda.memory_reserved() / 1024**3
+                    print(f"Post-job GPU Memory (fallback) - Allocated: {memory_allocated:.2f}GB, Cached: {memory_cached:.2f}GB")
+                
+                gc.collect()
+                print(f"Memory cleanup completed for job {job['id']} (fallback path)")
+                
+            except Exception as cleanup_error:
+                print(f"Warning: Post-job memory cleanup failed (fallback): {cleanup_error}")
+            # ===== END ENHANCED MEMORY CLEANUP (FALLBACK PATH) =====
+            
             return result
 
         # job_output = []
@@ -202,6 +262,19 @@ def run(job):
         print(f"Error type: {type(e).__name__}")
         import traceback
         print(f"Full traceback: {traceback.format_exc()}")
+        
+        # ===== EMERGENCY MEMORY CLEANUP =====
+        try:
+            print("Starting emergency memory cleanup after error...")
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                torch.cuda.synchronize()
+            gc.collect()
+            print("Emergency memory cleanup completed")
+        except Exception as emergency_cleanup_error:
+            print(f"Warning: Emergency memory cleanup failed: {emergency_cleanup_error}")
+        # ===== END EMERGENCY MEMORY CLEANUP =====
+        
         return {"error": f"Handler crashed: {str(e)}"}
 
 

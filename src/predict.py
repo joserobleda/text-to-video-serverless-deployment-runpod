@@ -9,7 +9,7 @@ from diffusers.utils import export_to_video
 from diffusers import AutoencoderKLCogVideoX, CogVideoXImageToVideoPipeline, CogVideoXTransformer3DModel
 from diffusers.utils import export_to_video, load_image
 from transformers import T5EncoderModel, T5Tokenizer
-import torch
+import gc  # Add garbage collection import
 model_path = 'model_cache'   # The local directory to save downloaded checkpoint
 
 model_id=model_path
@@ -66,6 +66,39 @@ class Predictor:
         export_to_video(video, file_name, fps=fps)
 
         encoded_frames = encode_video_to_base64(file_name)
+        
+        # ===== MEMORY CLEANUP =====
+        # Clear GPU cache and free memory to prevent accumulation between jobs
+        try:
+            print("Starting GPU memory cleanup...")
+            
+            # Clear large variables first
+            if 'video' in locals():
+                del video
+            if 'generator' in locals():
+                del generator
+            
+            # PyTorch GPU memory cleanup
+            if torch.cuda.is_available():
+                # Clear PyTorch GPU cache
+                torch.cuda.empty_cache()
+                # Synchronize to ensure cleanup is complete
+                torch.cuda.synchronize()
+                
+                # Get memory info for debugging
+                memory_allocated = torch.cuda.memory_allocated() / 1024**3  # GB
+                memory_cached = torch.cuda.memory_reserved() / 1024**3      # GB
+                print(f"GPU Memory after cleanup - Allocated: {memory_allocated:.2f}GB, Cached: {memory_cached:.2f}GB")
+            
+            # Force garbage collection
+            gc.collect()
+            
+            print("GPU memory cleanup completed")
+            
+        except Exception as cleanup_error:
+            print(f"Warning: Memory cleanup failed: {cleanup_error}")
+        # ===== END MEMORY CLEANUP =====
+        
         return encoded_frames
 
 
