@@ -45,25 +45,46 @@ class Predictor:
         # self.pipe.enable_xformers_memory_efficient_attention()
 
     @torch.inference_mode()
-    def predict(self, prompt, number_of_frames,num_inference_steps, guidance_scale,fps):
+    def predict(self, prompt, number_of_frames, num_inference_steps, guidance_scale, fps, height=768, width=768, negative_prompt=None):
         if torch.cuda.is_available():
             print('=============cuda available==================')
             generator = torch.Generator('cuda').manual_seed(42)
         else:
             print('=============cuda not available==============')
             generator = torch.Generator().manual_seed(42)
-        print('inference')
-        video = self.pipe(
-            prompt=prompt,
-            num_videos_per_prompt=1,
-            num_inference_steps=num_inference_steps,
-            num_frames=number_of_frames,
-            guidance_scale=guidance_scale,
-            generator=generator,
-        ).frames[0]
+        
+        # Progress callback function (officially supported by CogVideoX)
+        def progress_callback(pipeline, step, timestep, callback_kwargs):
+            progress_percent = ((step + 1) / num_inference_steps) * 100
+            print(f"🎬 Generation Progress: {progress_percent:.1f}% ({step + 1}/{num_inference_steps} steps)")
+            return callback_kwargs
+        
+        print(f'🚀 Starting inference: {num_inference_steps} steps, {number_of_frames} frames, {height}x{width}')
+        
+        # Prepare pipeline arguments
+        pipe_args = {
+            "prompt": prompt,
+            "height": height,
+            "width": width,
+            "num_videos_per_prompt": 1,
+            "num_inference_steps": num_inference_steps,
+            "num_frames": number_of_frames,
+            "guidance_scale": guidance_scale,
+            "generator": generator,
+            "callback_on_step_end": progress_callback,
+            "callback_on_step_end_tensor_inputs": ["latents"],  # Required for callback
+        }
+        
+        # Only add negative_prompt if it's not None/empty
+        if negative_prompt and negative_prompt.strip():
+            pipe_args["negative_prompt"] = negative_prompt
+        
+        video = self.pipe(**pipe_args).frames[0]
+        print("✅ Generation completed! Exporting video...")
 
         file_name = "new_out.mp4"
         export_to_video(video, file_name, fps=fps)
+        print(f"🎥 Video exported at {fps}fps: {file_name}")
 
         encoded_frames = encode_video_to_base64(file_name)
         
@@ -99,6 +120,7 @@ class Predictor:
             print(f"Warning: Memory cleanup failed: {cleanup_error}")
         # ===== END MEMORY CLEANUP =====
         
+        print(f"🎬 VIDEO GENERATION COMPLETE! ({number_of_frames} frames, {height}x{width}, {fps}fps)")
         return encoded_frames
 
 
