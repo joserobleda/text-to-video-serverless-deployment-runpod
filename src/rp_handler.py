@@ -146,10 +146,11 @@ def run(job):
         print("Starting MODEL.predict...")
         encoded_vid = MODEL.predict(
             prompt=validated_input["prompt"],
+            negative_prompt=validated_input.get("negative_prompt"),
             num_inference_steps=validated_input['num_inference_steps'],
             number_of_frames=validated_input["number_of_frames"],
             guidance_scale=validated_input['guidance_scale'],
-            fps=validated_input.get("fps", 8)
+            fps=validated_input.get("fps", 24)
         )
         print("MODEL.predict completed")
 

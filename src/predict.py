@@ -45,7 +45,7 @@ class Predictor:
         # self.pipe.enable_xformers_memory_efficient_attention()
 
     @torch.inference_mode()
-    def predict(self, prompt, number_of_frames, num_inference_steps, guidance_scale, fps, height=768, width=768, negative_prompt=None):
+    def predict(self, prompt, number_of_frames, num_inference_steps, guidance_scale, fps, negative_prompt=None):
         if torch.cuda.is_available():
             print('=============cuda available==================')
             generator = torch.Generator('cuda').manual_seed(42)
@@ -59,13 +59,11 @@ class Predictor:
             print(f"🎬 Generation Progress: {progress_percent:.1f}% ({step + 1}/{num_inference_steps} steps)")
             return callback_kwargs
         
-        print(f'🚀 Starting inference: {num_inference_steps} steps, {number_of_frames} frames, {height}x{width}')
+        print(f'🚀 Starting inference: {num_inference_steps} steps, {number_of_frames} frames')
         
         # Prepare pipeline arguments
         pipe_args = {
             "prompt": prompt,
-            "height": height,
-            "width": width,
             "num_videos_per_prompt": 1,
             "num_inference_steps": num_inference_steps,
             "num_frames": number_of_frames,
@@ -120,7 +118,7 @@ class Predictor:
             print(f"Warning: Memory cleanup failed: {cleanup_error}")
         # ===== END MEMORY CLEANUP =====
         
-        print(f"🎬 VIDEO GENERATION COMPLETE! ({number_of_frames} frames, {height}x{width}, {fps}fps)")
+        print(f"🎬 VIDEO GENERATION COMPLETE! ({number_of_frames} frames, {fps}fps)")
         return encoded_frames
 
 
